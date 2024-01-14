@@ -38,7 +38,7 @@ void CGlock::Spawn()
 
 void CGlock::Precache()
 {
-	PRECACHE_MODEL("models/v_9mmhandgun.mdl");
+	PRECACHE_MODEL("models/v_hardballer.mdl");
 	PRECACHE_MODEL("models/w_9mmhandgun.mdl");
 	PRECACHE_MODEL("models/p_9mmhandgun.mdl");
 
@@ -50,6 +50,8 @@ void CGlock::Precache()
 	PRECACHE_SOUND("weapons/pl_gun1.wav"); //silenced handgun
 	PRECACHE_SOUND("weapons/pl_gun2.wav"); //silenced handgun
 	PRECACHE_SOUND("weapons/pl_gun3.wav"); //handgun
+
+	PRECACHE_SOUND("weapons/w_hardballer-1.wav"); //handgun
 
 	m_usFireGlock1 = PRECACHE_EVENT(1, "events/glock1.sc");
 	m_usFireGlock2 = PRECACHE_EVENT(1, "events/glock2.sc");
@@ -75,21 +77,26 @@ bool CGlock::GetItemInfo(ItemInfo* p)
 bool CGlock::Deploy()
 {
 	// pev->body = 1;
-	return DefaultDeploy("models/v_9mmhandgun.mdl", "models/p_9mmhandgun.mdl", GLOCK_DRAW, "onehanded");
+	return DefaultDeploy("models/v_hardballer.mdl", "models/p_9mmhandgun.mdl", GLOCK_RELOAD_NOT_EMPTY, "onehanded");
 }
 
 void CGlock::SecondaryAttack()
 {
-	GlockFire(0.1, 0.2, false);
+	//GlockFire(0.1, 0.2, false);
 }
 
 void CGlock::PrimaryAttack()
 {
-	GlockFire(0.01, 0.3, true);
+	GlockFire(0.01, 0.1, true);
 }
 
 void CGlock::GlockFire(float flSpread, float flCycleTime, bool fUseAutoAim)
 {
+	if (m_flNextSecondaryAttack > 0)
+		return;
+
+	m_flNextSecondaryAttack = 999999;
+
 	if (m_iClip <= 0)
 	{
 		//if (m_fFireOnEmpty)
@@ -132,27 +139,26 @@ void CGlock::GlockFire(float flSpread, float flCycleTime, bool fUseAutoAim)
 	Vector vecSrc = m_pPlayer->GetGunPosition();
 	Vector vecAiming;
 
-	if (fUseAutoAim)
-	{
-		vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
-	}
-	else
-	{
-		vecAiming = gpGlobals->v_forward;
-	}
+	vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
 
 	Vector vecDir;
-	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 8192, BULLET_PLAYER_9MM, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed);
+	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_5DEGREES * (Length(m_pPlayer->pev->punchangle) / 5), 8192, BULLET_PLAYER_9MM, 0, 15, m_pPlayer->pev, m_pPlayer->random_seed);
 
 	PLAYBACK_EVENT_FULL(flags, m_pPlayer->edict(), fUseAutoAim ? m_usFireGlock1 : m_usFireGlock2, 0.0, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, (m_iClip == 0) ? 1 : 0, 0);
 
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay(flCycleTime);
+	m_flNextPrimaryAttack = GetNextAttackDelay(flCycleTime);
 
 	if (0 == m_iClip && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0)
 		// HEV suit - indicate out of ammo condition
 		m_pPlayer->SetSuitUpdate("!HEV_AMO0", false, 0);
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat(m_pPlayer->random_seed, 10, 15);
+	m_pPlayer->pev->punchangle = m_pPlayer->pev->punchangle + Vector(-1.2, RANDOM_FLOAT(-1, 1), 0);
+	m_pPlayer->pev->punchangle.x = m_pPlayer->pev->punchangle.x * 1.4f;
+	m_pPlayer->pev->punchangle.x = V_max(m_pPlayer->pev->punchangle.x, -10);
+	m_pPlayer->pev->punchangle.y = V_max(m_pPlayer->pev->punchangle.y, -10);
+	m_pPlayer->pev->punchangle.y = V_min(m_pPlayer->pev->punchangle.y, 10);
+
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.01;
 }
 
 
@@ -164,13 +170,13 @@ void CGlock::Reload()
 	bool iResult;
 
 	if (m_iClip == 0)
-		iResult = DefaultReload(17, GLOCK_RELOAD, 1.5);
+		iResult = DefaultReload(17, GLOCK_RELOAD, 2.5);
 	else
-		iResult = DefaultReload(17, GLOCK_RELOAD_NOT_EMPTY, 1.5);
+		iResult = DefaultReload(17, GLOCK_RELOAD, 2.5);
 
 	if (iResult)
 	{
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat(m_pPlayer->random_seed, 10, 15);
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 2.5;
 	}
 }
 
@@ -185,29 +191,7 @@ void CGlock::WeaponIdle()
 	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
 		return;
 
-	// only idle if the slid isn't back
-	if (m_iClip != 0)
-	{
-		int iAnim;
-		float flRand = UTIL_SharedRandomFloat(m_pPlayer->random_seed, 0.0, 1.0);
-
-		if (flRand <= 0.3 + 0 * 0.75)
-		{
-			iAnim = GLOCK_IDLE3;
-			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 49.0 / 16;
-		}
-		else if (flRand <= 0.6 + 0 * 0.875)
-		{
-			iAnim = GLOCK_IDLE1;
-			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 60.0 / 16.0;
-		}
-		else
-		{
-			iAnim = GLOCK_IDLE2;
-			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 40.0 / 16.0;
-		}
-		SendWeaponAnim(iAnim);
-	}
+	m_flNextSecondaryAttack = 0;
 }
 
 

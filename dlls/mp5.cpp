@@ -127,7 +127,7 @@ void CMP5::PrimaryAttack()
 	Vector vecDir;
 
 	// Add some innacuracy when spraying
-	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_3DEGREES*(Length(m_pPlayer->pev->punchangle)/5), 8192, 4, 2, 8, m_pPlayer->pev, m_pPlayer->random_seed);
+	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_3DEGREES*(Length(m_pPlayer->pev->punchangle)/5), 8192, 4, 2, 12, m_pPlayer->pev, m_pPlayer->random_seed);
 
 	int flags;
 #if defined(CLIENT_WEAPONS)
