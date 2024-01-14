@@ -262,6 +262,8 @@ void W_Precache()
 	memset(CBasePlayerItem::ItemInfoArray, 0, sizeof(CBasePlayerItem::ItemInfoArray));
 	memset(CBasePlayerItem::AmmoInfoArray, 0, sizeof(CBasePlayerItem::AmmoInfoArray));
 	giAmmoIndex = 0;
+	
+	ALERT(at_console,"Hi Is This Working???!!!! Hello");
 
 	// custom items...
 
