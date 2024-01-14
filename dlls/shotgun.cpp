@@ -50,8 +50,7 @@ void CShotgun::Precache()
 
 	PRECACHE_SOUND("items/9mmclip1.wav");
 
-	PRECACHE_SOUND("weapons/dbarrel1.wav"); //shotgun
-	PRECACHE_SOUND("weapons/sbarrel1.wav"); //shotgun
+	PRECACHE_SOUND("weapons/w_shotgun-1.wav"); //shotgun
 
 	PRECACHE_SOUND("weapons/reload1.wav"); // shotgun reload
 	PRECACHE_SOUND("weapons/reload3.wav"); // shotgun reload
@@ -90,7 +89,7 @@ bool CShotgun::Deploy()
 	return DefaultDeploy("models/v_shotgun.mdl", "models/p_shotgun.mdl", SHOTGUN_DRAW, "shotgun");
 }
 
-void CShotgun::PrimaryAttack()
+void CShotgun::Fire()
 {
 	// don't fire underwater
 	if (m_pPlayer->pev->waterlevel == 3)
@@ -105,6 +104,11 @@ void CShotgun::PrimaryAttack()
 		Reload();
 		if (m_iClip == 0)
 			PlayEmptySound();
+		return;
+	}
+
+	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
+	{
 		return;
 	}
 
@@ -134,12 +138,12 @@ void CShotgun::PrimaryAttack()
 	if (g_pGameRules->IsMultiplayer())
 #endif
 	{
-		vecDir = m_pPlayer->FireBulletsPlayer(4, vecSrc, vecAiming, VECTOR_CONE_DM_SHOTGUN, 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed);
+		vecDir = m_pPlayer->FireBulletsPlayer(4, vecSrc, vecAiming, VECTOR_CONE_DM_SHOTGUN, 2048, BULLET_NONE, 0, 8, m_pPlayer->pev, m_pPlayer->random_seed);
 	}
 	else
 	{
 		// regular old, untouched spread.
-		vecDir = m_pPlayer->FireBulletsPlayer(6, vecSrc, vecAiming, VECTOR_CONE_10DEGREES, 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed);
+		vecDir = m_pPlayer->FireBulletsPlayer(6, vecSrc, vecAiming, VECTOR_CONE_10DEGREES, 2048, BULLET_NONE, 0, 8, m_pPlayer->pev, m_pPlayer->random_seed);
 	}
 
 	PLAYBACK_EVENT_FULL(flags, m_pPlayer->edict(), m_usSingleFire, 0.0, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0);
@@ -152,18 +156,53 @@ void CShotgun::PrimaryAttack()
 	//if (m_iClip != 0)
 	m_flPumpTime = gpGlobals->time + 0.5;
 
-	m_flNextPrimaryAttack = GetNextAttackDelay(0.75);
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.75;
-	if (m_iClip != 0)
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 5.0;
-	else
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1;
+	m_flTimeWeaponIdle = m_flNextPrimaryAttack = GetNextAttackDelay(0.18);
 	m_fInSpecialReload = 0;
+
+	m_pPlayer->pev->punchangle = m_pPlayer->pev->punchangle + Vector(-2, RANDOM_LONG(-2, 2), 0);
+	m_pPlayer->pev->punchangle.x *= 1.3f;
+}
+
+void CShotgun::PrimaryAttack()
+{
+	if (m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0 || m_iClip == SHOTGUN_MAX_CLIP)
+		return;
+
+	// don't reload until recoil is done
+	if (m_flNextPrimaryAttack > UTIL_WeaponTimeBase())
+		return;
+
+	// check to see if we're ready to reload
+	if (m_fInSpecialReload == 0)
+	{
+		if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
+			return;
+		// was waiting for gun to move to side
+		m_fInSpecialReload = 2;
+
+		if (RANDOM_LONG(0, 1))
+			EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/reload1.wav", 1, ATTN_NORM, 0, 85 + RANDOM_LONG(0, 0x1f));
+		else
+			EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/reload3.wav", 1, ATTN_NORM, 0, 85 + RANDOM_LONG(0, 0x1f));
+
+		SendWeaponAnim(SHOTGUN_RELOAD);
+
+		m_flNextReload = UTIL_WeaponTimeBase() + 0.3;
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
+	}
+	else
+	{
+		// Add them to the clip
+		m_iClip += 1;
+		m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] -= 1;
+		m_fInSpecialReload = 0;
+	}
 }
 
 
 void CShotgun::SecondaryAttack()
 {
+	/*
 	// don't fire underwater
 	if (m_pPlayer->pev->waterlevel == 3)
 	{
@@ -234,53 +273,13 @@ void CShotgun::SecondaryAttack()
 		m_flTimeWeaponIdle = 1.5;
 
 	m_fInSpecialReload = 0;
+	*/
 }
 
 
 void CShotgun::Reload()
 {
-	if (m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0 || m_iClip == SHOTGUN_MAX_CLIP)
-		return;
-
-	// don't reload until recoil is done
-	if (m_flNextPrimaryAttack > UTIL_WeaponTimeBase())
-		return;
-
-	// check to see if we're ready to reload
-	if (m_fInSpecialReload == 0)
-	{
-		SendWeaponAnim(SHOTGUN_START_RELOAD);
-		m_fInSpecialReload = 1;
-		m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.6;
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.6;
-		m_flNextPrimaryAttack = GetNextAttackDelay(1.0);
-		m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.0;
-		return;
-	}
-	else if (m_fInSpecialReload == 1)
-	{
-		if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
-			return;
-		// was waiting for gun to move to side
-		m_fInSpecialReload = 2;
-
-		if (RANDOM_LONG(0, 1))
-			EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/reload1.wav", 1, ATTN_NORM, 0, 85 + RANDOM_LONG(0, 0x1f));
-		else
-			EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/reload3.wav", 1, ATTN_NORM, 0, 85 + RANDOM_LONG(0, 0x1f));
-
-		SendWeaponAnim(SHOTGUN_RELOAD);
-
-		m_flNextReload = UTIL_WeaponTimeBase() + 0.5;
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
-	}
-	else
-	{
-		// Add them to the clip
-		m_iClip += 1;
-		m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] -= 1;
-		m_fInSpecialReload = 1;
-	}
+	
 }
 
 
@@ -300,15 +299,19 @@ void CShotgun::WeaponIdle()
 	}
 	*/
 
+	if (m_iClip > 0) {
+		Fire();
+	}
+
 	if (m_flTimeWeaponIdle < UTIL_WeaponTimeBase())
 	{
-		if (m_iClip == 0 && m_fInSpecialReload == 0 && 0 != m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType])
+		if (m_fInSpecialReload == 0 && 0 != m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType])
 		{
 			Reload();
 		}
 		else if (m_fInSpecialReload != 0)
 		{
-			if (m_iClip != 8 && 0 != m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType])
+			if (0 != m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType])
 			{
 				Reload();
 			}
@@ -316,11 +319,6 @@ void CShotgun::WeaponIdle()
 			{
 				// reload debounce has timed out
 				SendWeaponAnim(SHOTGUN_PUMP);
-
-				// play cocking sound
-				EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/scock1.wav", 1, ATTN_NORM, 0, 95 + RANDOM_LONG(0, 0x1f));
-				m_fInSpecialReload = 0;
-				m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.5;
 			}
 		}
 		else

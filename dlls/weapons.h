@@ -721,6 +721,7 @@ public:
 	int iItemSlot() override { return 3; }
 	bool GetItemInfo(ItemInfo* p) override;
 
+	void Fire();
 	void PrimaryAttack() override;
 	void SecondaryAttack() override;
 	bool Deploy() override;
