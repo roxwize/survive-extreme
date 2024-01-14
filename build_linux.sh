@@ -16,3 +16,11 @@ cd release
 cp hl.so "$BUILD_DIR/dlls"
 cp client.so "$BUILD_DIR/cl_dlls"
 echo "We are finised"
+if [ "$RUN_HL" = "y" ]; then
+  if [ -z "$STEAM_DIR" ]; then
+    echo "Steam executable directory not specified"
+    exit 1
+  fi
+  echo "Running half life"
+  $STEAM_DIR -applaunch 70 -game survex +sv_cheats 1 +developer 2 +map c1a0
+fi

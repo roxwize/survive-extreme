@@ -4,7 +4,7 @@ This is a mod
 
 ## Building
 
-**IF YOU ARE ON LINUX** just run `bash build_linux.sh`
+**IF YOU ARE ON LINUX** just run `bash build_linux.sh` (set RUN_HL to "y" and STEAM_DIR to steam's executable path to run the mod after it's finished)
 
 Make a mod folder in your hlaf life directory
 
