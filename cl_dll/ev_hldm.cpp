@@ -660,8 +660,6 @@ void EV_FireMP5(event_args_t* args)
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(MP5_FIRE1 + gEngfuncs.pfnRandomLong(0, 2), 0);
-
-		V_PunchAxis(0, gEngfuncs.pfnRandomFloat(-2, 2));
 	}
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 4);
@@ -671,17 +669,18 @@ void EV_FireMP5(event_args_t* args)
 	switch (gEngfuncs.pfnRandomLong(0, 1))
 	{
 	case 0:
-		gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/hks1.wav", 1, ATTN_NORM, 0, 94 + gEngfuncs.pfnRandomLong(0, 0xf));
+		gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/w_m16-1.wav", 1, ATTN_NORM, 0, 95 + gEngfuncs.pfnRandomLong(0, 10));
 		break;
 	case 1:
-		gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/hks2.wav", 1, ATTN_NORM, 0, 94 + gEngfuncs.pfnRandomLong(0, 0xf));
+		gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/w_m16-2.wav", 1, ATTN_NORM, 0, 95 + gEngfuncs.pfnRandomLong(0, 10));
 		break;
 	}
 
 	EV_GetGunPosition(args, vecSrc, origin);
 	VectorCopy(forward, vecAiming);
-
-	EV_HLDM_FireBullets(idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_MP5, 2, &tracerCount[idx - 1], args->fparam1, args->fparam2);
+	
+	//Same thing for the shotgun
+	//EV_HLDM_FireBullets(idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_MP5, 2, &tracerCount[idx - 1], args->fparam1, args->fparam2);
 }
 
 // We only predict the animation and sound

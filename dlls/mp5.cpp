@@ -36,7 +36,7 @@ void CMP5::Spawn()
 	SET_MODEL(ENT(pev), "models/w_9mmAR.mdl");
 	m_iId = WEAPON_MP5;
 
-	m_iDefaultAmmo = MP5_DEFAULT_GIVE;
+	m_iDefaultAmmo = 30;
 
 	FallInit(); // get ready to fall down.
 }
@@ -78,7 +78,7 @@ bool CMP5::GetItemInfo(ItemInfo* p)
 	p->iMaxAmmo1 = _9MM_MAX_CARRY;
 	p->pszAmmo2 = "ARgrenades";
 	p->iMaxAmmo2 = M203_GRENADE_MAX_CARRY;
-	p->iMaxClip = MP5_MAX_CLIP;
+	p->iMaxClip = 30;
 	p->iSlot = 2;
 	p->iPosition = 0;
 	p->iFlags = 0;
@@ -126,20 +126,8 @@ void CMP5::PrimaryAttack()
 	Vector vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_5DEGREES);
 	Vector vecDir;
 
-#ifdef CLIENT_DLL
-	if (bIsMultiplayer())
-#else
-	if (g_pGameRules->IsMultiplayer())
-#endif
-	{
-		// optimized multiplayer. Widened to make it easier to hit a moving player
-		vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_6DEGREES, 8192, BULLET_PLAYER_MP5, 2, 0, m_pPlayer->pev, m_pPlayer->random_seed);
-	}
-	else
-	{
-		// single player spread
-		vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_3DEGREES, 8192, BULLET_PLAYER_MP5, 2, 0, m_pPlayer->pev, m_pPlayer->random_seed);
-	}
+	// Add some innacuracy when spraying
+	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_3DEGREES*(Length(m_pPlayer->pev->punchangle)/5), 8192, 4, 2, 8, m_pPlayer->pev, m_pPlayer->random_seed);
 
 	int flags;
 #if defined(CLIENT_WEAPONS)
@@ -158,6 +146,12 @@ void CMP5::PrimaryAttack()
 
 	if (m_flNextPrimaryAttack < UTIL_WeaponTimeBase())
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.1;
+
+	m_pPlayer->pev->punchangle = m_pPlayer->pev->punchangle + Vector(-1, RANDOM_FLOAT(-1,1), 0);
+	m_pPlayer->pev->punchangle.x = m_pPlayer->pev->punchangle.x * 1.4f;
+	m_pPlayer->pev->punchangle.x = V_max(m_pPlayer->pev->punchangle.x,-10);
+	m_pPlayer->pev->punchangle.y = V_max(m_pPlayer->pev->punchangle.y, -10);
+	m_pPlayer->pev->punchangle.y = V_min(m_pPlayer->pev->punchangle.y, 10);
 
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat(m_pPlayer->random_seed, 10, 15);
 }
