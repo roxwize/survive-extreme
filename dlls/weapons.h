@@ -106,7 +106,7 @@ public:
 
 //#define CROWBAR_MAX_CLIP		WEAPON_NOCLIP
 #define GLOCK_MAX_CLIP 17
-#define PYTHON_MAX_CLIP 6
+#define PYTHON_MAX_CLIP 3
 #define MP5_MAX_CLIP 50
 #define MP5_DEFAULT_AMMO 25
 #define SHOTGUN_MAX_CLIP 8
@@ -583,6 +583,7 @@ public:
 	void Precache() override;
 	int iItemSlot() override { return 2; }
 	bool GetItemInfo(ItemInfo* p) override;
+    void Fire();
 	void PrimaryAttack() override;
 	void SecondaryAttack() override;
 	bool Deploy() override;
@@ -601,6 +602,7 @@ public:
 
 private:
 	unsigned short m_usFirePython;
+    bool m_bBurstFiring;
 };
 
 enum mp5_e

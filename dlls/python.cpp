@@ -87,6 +87,7 @@ bool CPython::Deploy()
 	{
 		pev->body = 0;
 	}
+    m_bBurstFiring = false; // Hey smart guy
 
 	return DefaultDeploy("models/v_357.mdl", "models/p_357.mdl", PYTHON_DRAW, "python", pev->body);
 }
@@ -129,6 +130,48 @@ void CPython::SecondaryAttack()
 	m_flNextSecondaryAttack = 0.5;
 }
 
+void CPython::Fire() {
+    m_pPlayer->m_iWeaponVolume = LOUD_GUN_VOLUME;
+    m_pPlayer->m_iWeaponFlash = BRIGHT_GUN_FLASH;
+
+    m_iClip--;
+
+    m_pPlayer->pev->effects = (int)(m_pPlayer->pev->effects) | EF_MUZZLEFLASH;
+
+    // player "shoot" animation
+    m_pPlayer->SetAnimation(PLAYER_ATTACK1);
+
+
+    UTIL_MakeVectors(m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle);
+
+    Vector vecSrc = m_pPlayer->GetGunPosition();
+    Vector vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
+
+    Vector vecDir;
+    vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_1DEGREES, 8192, BULLET_PLAYER_357, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed);
+
+    int flags;
+#if defined(CLIENT_WEAPONS)
+    flags = FEV_NOTHOST;
+#else
+    flags = 0;
+#endif
+
+    PLAYBACK_EVENT_FULL(flags, m_pPlayer->edict(), m_usFirePython, 0.0, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0);
+
+    if (0 == m_iClip && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0)
+        // HEV suit - indicate out of ammo condition
+        m_pPlayer->SetSuitUpdate("!HEV_AMO0", false, 0);
+
+    m_flNextPrimaryAttack = 0.2;
+    m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.8;
+
+    if (m_iClip <= 0) {
+        // We're done here
+        m_bBurstFiring = false;
+    }
+}
+
 void CPython::PrimaryAttack()
 {
 	// don't fire underwater
@@ -150,40 +193,7 @@ void CPython::PrimaryAttack()
 		return;
 	}
 
-	m_pPlayer->m_iWeaponVolume = LOUD_GUN_VOLUME;
-	m_pPlayer->m_iWeaponFlash = BRIGHT_GUN_FLASH;
-
-	m_iClip--;
-
-	m_pPlayer->pev->effects = (int)(m_pPlayer->pev->effects) | EF_MUZZLEFLASH;
-
-	// player "shoot" animation
-	m_pPlayer->SetAnimation(PLAYER_ATTACK1);
-
-
-	UTIL_MakeVectors(m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle);
-
-	Vector vecSrc = m_pPlayer->GetGunPosition();
-	Vector vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
-
-	Vector vecDir;
-	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_1DEGREES, 8192, BULLET_PLAYER_357, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed);
-
-	int flags;
-#if defined(CLIENT_WEAPONS)
-	flags = FEV_NOTHOST;
-#else
-	flags = 0;
-#endif
-
-	PLAYBACK_EVENT_FULL(flags, m_pPlayer->edict(), m_usFirePython, 0.0, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0);
-
-	if (0 == m_iClip && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0)
-		// HEV suit - indicate out of ammo condition
-		m_pPlayer->SetSuitUpdate("!HEV_AMO0", false, 0);
-
-	m_flNextPrimaryAttack = 0.75;
-	m_flTimeWeaponIdle = UTIL_SharedRandomFloat(m_pPlayer->random_seed, 10, 15);
+    m_bBurstFiring = true;
 }
 
 
@@ -214,8 +224,12 @@ void CPython::WeaponIdle()
 
 	m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
 
-	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
-		return;
+	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase()) {
+        if (m_bBurstFiring && UTIL_WeaponTimeBase() >= UTIL_WeaponTimeBase() + m_flNextPrimaryAttack) {
+            Fire();
+        }
+        return;
+    }
 
 	int iAnim;
 	float flRand = UTIL_SharedRandomFloat(m_pPlayer->random_seed, 0, 1);
