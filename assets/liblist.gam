@@ -1,0 +1,6 @@
+game "Survive Extreme"
+type "singleplayer_only"
+startmap "c0a0"
+trainmap "t0a0"
+gamedll "dlls/hl.dll"
+gamedll_linux "dlls/hl.so"
