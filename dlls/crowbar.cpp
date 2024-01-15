@@ -81,7 +81,6 @@ bool CCrowbar::Deploy()
 void CCrowbar::Holster()
 {
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
-	SendWeaponAnim(CROWBAR_HOLSTER);
 }
 
 
@@ -160,7 +159,7 @@ bool CCrowbar::Swing(bool fFirst)
 
 	UTIL_MakeVectors(m_pPlayer->pev->v_angle);
 	Vector vecSrc = m_pPlayer->GetGunPosition();
-	Vector vecEnd = vecSrc + gpGlobals->v_forward * 32;
+	Vector vecEnd = vecSrc + gpGlobals->v_forward * 64;
 
 	UTIL_TraceLine(vecSrc, vecEnd, dont_ignore_monsters, ENT(m_pPlayer->pev), &tr);
 
@@ -193,29 +192,24 @@ bool CCrowbar::Swing(bool fFirst)
 		if (fFirst)
 		{
 			// miss
-			m_flNextPrimaryAttack = GetNextAttackDelay(0.1);
+			m_flNextPrimaryAttack = GetNextAttackDelay(RANDOM_FLOAT(0, 0.1));
+
+			SendWeaponAnim(CROWBAR_ATTACK1MISS);
 
 			// player "shoot" animation
 			m_pPlayer->SetAnimation(PLAYER_ATTACK1);
+
+			m_flTimeWeaponIdle = (9.0 / 35.0);
 		}
 	}
 	else
 	{
-		switch (((m_iSwing++) % 2) + 1)
-		{
-		case 0:
-			SendWeaponAnim(CROWBAR_ATTACK1HIT);
-			break;
-		case 1:
-			SendWeaponAnim(CROWBAR_ATTACK2HIT);
-			break;
-		case 2:
-			SendWeaponAnim(CROWBAR_ATTACK3HIT);
-			break;
-		}
-
 		// player "shoot" animation
 		m_pPlayer->SetAnimation(PLAYER_ATTACK1);
+
+		SendWeaponAnim(CROWBAR_ATTACK1HIT);
+
+		m_flTimeWeaponIdle = (13.0 / 55.0);
 
 #ifndef CLIENT_DLL
 
@@ -225,10 +219,10 @@ bool CCrowbar::Swing(bool fFirst)
 
 		ClearMultiDamage();
 
-		if ((m_flNextPrimaryAttack + 0.5 < UTIL_WeaponTimeBase()) || g_pGameRules->IsMultiplayer())
+		if (m_flPumpTime > 1 || g_pGameRules->IsMultiplayer())
 		{
 			// first swing does BLISTERING EXPLODALICIOUS damage
-			pEntity->TraceAttack(m_pPlayer->pev, 9999, gpGlobals->v_forward, &tr, DMG_BULLET);
+			pEntity->TraceAttack(m_pPlayer->pev, 10, gpGlobals->v_forward, &tr, DMG_BULLET|DMG_ALWAYSGIB);
 			m_flNextPrimaryAttack = GetNextAttackDelay(0.5);
 
 			if (pEntity->pev->takedamage && pEntity->BloodColor() != DONT_BLEED)
@@ -244,26 +238,17 @@ bool CCrowbar::Swing(bool fFirst)
 			// subsequent swings do NONE !!! FUCK YOU !!!!
 			pEntity->TraceAttack(m_pPlayer->pev, 0.01, gpGlobals->v_forward, &tr, DMG_BULLET);
 
-			for (int asd = 0; asd < 5; asd++) // Spark bomb
+			for (int asd = 0; asd < m_flPumpTime*5; asd++) // Spark bomb
 			{
-				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY); //  MSG_PAS MSG_BROADCAST
-				WRITE_BYTE(TE_TRACER);
-				WRITE_COORD(tr.vecEndPos.x + RANDOM_LONG(-16, 16));
-				WRITE_COORD(tr.vecEndPos.y + RANDOM_LONG(-16, 16));
-				WRITE_COORD(tr.vecEndPos.z + RANDOM_LONG(-16, 16));
-				WRITE_COORD(tr.vecEndPos.x);
-				WRITE_COORD(tr.vecEndPos.y);
-				WRITE_COORD(tr.vecEndPos.z);
-				MESSAGE_END();
+				DecalGunshot(&tr, BULLET_NONE);
 			}
-
-			DecalGunshot(&tr, BULLET_NONE);
 		}
 		ApplyMultiDamage(m_pPlayer->pev, m_pPlayer->pev);
 
 #endif
 
-		m_flNextPrimaryAttack = GetNextAttackDelay(0.01);
+		m_flNextPrimaryAttack = GetNextAttackDelay(RANDOM_FLOAT(0.02,0.05));
+		m_flPumpTime += m_flNextPrimaryAttack; // Charge it doc
 
 #ifndef CLIENT_DLL
 		// play thwack, smack, or dong sound
@@ -275,7 +260,12 @@ bool CCrowbar::Swing(bool fFirst)
 			if (pEntity->Classify() != CLASS_NONE && pEntity->Classify() != CLASS_MACHINE)
 			{
 				// play thwack or smack sound
-				EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/cbar_hitbody1.wav", 1, ATTN_NORM);
+				if (m_flPumpTime < 1)
+				{
+					EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_AUTO, "other/hurt2.wav", m_flPumpTime, ATTN_NORM, 0, RANDOM_LONG(90, 110));
+				} else {
+					EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_AUTO, "weapons/cbar_hitbody1.wav", 1, ATTN_NORM, 0, RANDOM_LONG(90,110));
+				}
 
 				m_pPlayer->m_iWeaponVolume = CROWBAR_BODYHIT_VOLUME;
 				if (!pEntity->IsAlive())
@@ -290,22 +280,25 @@ bool CCrowbar::Swing(bool fFirst)
 			}
 		}
 
+		if (m_flPumpTime > 1) {
+			m_pPlayer->pev->punchangle = Vector(RANDOM_LONG(-8, 8), RANDOM_LONG(-8, 8), RANDOM_LONG(-8, 8));
+		} else {
+			m_pPlayer->pev->punchangle = Vector(RANDOM_FLOAT(-1, 1) * m_flPumpTime, RANDOM_FLOAT(-1, 1) * m_flPumpTime, RANDOM_FLOAT(-1, 1) * m_flPumpTime);
+		}
+
 		// play texture hit sound
 		// UNDONE: Calculate the correct point of intersection when we hit with the hull instead of the line
 
 		if (fHitWorld)
 		{
-			float fvolbar = TEXTURETYPE_PlaySound(&tr, vecSrc, vecSrc + (vecEnd - vecSrc) * 2, BULLET_PLAYER_CROWBAR);
-
-			if (g_pGameRules->IsMultiplayer())
+			if (m_flPumpTime < 1)
 			{
-				// override the volume here, cause we don't play texture sounds in multiplayer,
-				// and fvolbar is going to be 0 from the above call.
-
-				fvolbar = 1;
+				EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_AUTO, "weapons/cbar_hit2.wav", m_flPumpTime, ATTN_NORM, 0, RANDOM_LONG(90, 110));
 			}
-
-			EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/cbar_hit1.wav", fvolbar, ATTN_NORM, 0, 98 + RANDOM_LONG(0, 3));
+			else
+			{
+				EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_AUTO, "weapons/cbar_hit1.wav", 1, ATTN_NORM, 0, RANDOM_LONG(90, 110));
+			}
 
 			pev->nextthink = gpGlobals->time + 0.01;
 
@@ -315,7 +308,20 @@ bool CCrowbar::Swing(bool fFirst)
 
 		m_pPlayer->m_iWeaponVolume = flVol * CROWBAR_WALLHIT_VOLUME;
 #endif
+
 		SetThink(&CCrowbar::Smack);
 	}
 	return fDidHit;
+}
+
+void CCrowbar::WeaponIdle()
+{
+	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
+	{
+		return;
+	}
+	m_flPumpTime = 0;
+	m_flTimeWeaponIdle = (46.0 / 40.0);
+
+	SendWeaponAnim(CROWBAR_IDLE, 0);
 }

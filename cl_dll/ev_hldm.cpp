@@ -1092,21 +1092,7 @@ void EV_Crowbar(event_args_t* args)
 	//Play Swing sound
 	gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/cbar_swing.wav", 1, ATTN_NORM, 0, PITCH_NORM);
 
-	if (EV_IsLocal(idx))
-	{
-		switch ((g_iSwing++) % 3)
-		{
-		case 0:
-			gEngfuncs.pEventAPI->EV_WeaponAnimation(CROWBAR_ATTACK1MISS, 0);
-			break;
-		case 1:
-			gEngfuncs.pEventAPI->EV_WeaponAnimation(CROWBAR_ATTACK2MISS, 0);
-			break;
-		case 2:
-			gEngfuncs.pEventAPI->EV_WeaponAnimation(CROWBAR_ATTACK3MISS, 0);
-			break;
-		}
-	}
+	//gEngfuncs.pEventAPI->EV_WeaponAnimation(CROWBAR_ATTACK1MISS, 0);
 }
 //======================
 //	   CROWBAR END

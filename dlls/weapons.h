@@ -525,13 +525,8 @@ enum crowbar_e
 {
 	CROWBAR_IDLE = 0,
 	CROWBAR_DRAW,
-	CROWBAR_HOLSTER,
 	CROWBAR_ATTACK1HIT,
-	CROWBAR_ATTACK1MISS,
-	CROWBAR_ATTACK2MISS,
-	CROWBAR_ATTACK2HIT,
-	CROWBAR_ATTACK3MISS,
-	CROWBAR_ATTACK3HIT
+	CROWBAR_ATTACK1MISS
 };
 
 class CCrowbar : public CBasePlayerWeapon
@@ -548,6 +543,7 @@ public:
 	bool Swing(bool fFirst);
 	bool Deploy() override;
 	void Holster() override;
+	void WeaponIdle() override;
 	int m_iSwing;
 	TraceResult m_trHit;
 
