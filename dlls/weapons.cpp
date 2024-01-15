@@ -33,7 +33,7 @@
 
 #define NOT_USED 255
 
-#define TRACER_FREQ 4 // Tracers fire every fourth bullet
+#define TRACER_FREQ 1 // Tracers fire every fourth bullet
 
 
 //=========================================================
@@ -354,6 +354,11 @@ void W_Precache()
 
 	PRECACHE_SOUND("weapons/bullet_hit1.wav"); // hit by bullet
 	PRECACHE_SOUND("weapons/bullet_hit2.wav"); // hit by bullet
+
+	PRECACHE_SOUND("other/hurt1.wav"); // hit by bullet
+	PRECACHE_SOUND("other/hurt2.wav"); // hit by bullet
+	PRECACHE_SOUND("other/hurt3.wav"); // hit by bullet
+	PRECACHE_SOUND("other/hurt4.wav"); // hit by bullet
 
 	PRECACHE_SOUND("items/weapondrop1.wav"); // weapon falls to the ground
 }

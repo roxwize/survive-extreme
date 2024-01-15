@@ -1432,6 +1432,8 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 		{
 			CBaseEntity* pEntity = CBaseEntity::Instance(tr.pHit);
 
+			
+
 			if (0 != iDamage)
 			{
 				pEntity->TraceAttack(pevAttacker, iDamage, vecDir, &tr, DMG_BULLET | ((iDamage > 16) ? DMG_ALWAYSGIB : DMG_NEVERGIB));
@@ -1476,11 +1478,7 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 				case BULLET_NONE: // FIX
 					pEntity->TraceAttack(pevAttacker, 50, vecDir, &tr, DMG_CLUB);
 					TEXTURETYPE_PlaySound(&tr, vecSrc, vecEnd, iBulletType);
-					// only decal glass
-					if (!FNullEnt(tr.pHit) && VARS(tr.pHit)->rendermode != 0)
-					{
-						UTIL_DecalTrace(&tr, DECAL_GLASSBREAK1 + RANDOM_LONG(0, 2));
-					}
+					UTIL_DecalTrace(&tr, iBulletType);
 
 					break;
 				}
@@ -1539,6 +1537,46 @@ Vector CBaseEntity::FireBulletsPlayer(unsigned int cShots, Vector vecSrc, Vector
 			if (0 != iDamage)
 			{
 				pEntity->TraceAttack(pevAttacker, iDamage, vecDir, &tr, DMG_BULLET | ((iDamage > 16) ? DMG_ALWAYSGIB : DMG_NEVERGIB));
+				
+				if (pEntity->pev->takedamage && pEntity->BloodColor() != DONT_BLEED)
+				{
+					SpawnBlood(tr.vecEndPos, pEntity->BloodColor(), 50);
+					TraceBleed(50, vecDir, &tr, DMG_GIB_CORPSE);
+
+					for (int asd = 0; asd < 5; asd++)
+					{
+						UTIL_BloodStream(tr.vecEndPos, Vector(RANDOM_LONG(-550, 550), RANDOM_LONG(-550, 550), RANDOM_LONG(-550, 550)), 70, RANDOM_LONG(50, 255));
+					}
+				}
+
+				Vector asd;
+				VectorCopy(vecSrc, asd);
+				VectorAdd(asd, vecRight*13, asd);
+				VectorAdd(asd, vecUp * -13, asd);
+
+				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY); //  MSG_PAS MSG_BROADCAST
+				WRITE_BYTE(TE_TRACER);
+				WRITE_COORD(asd.x);
+				WRITE_COORD(asd.y);
+				WRITE_COORD(asd.z);
+				WRITE_COORD(tr.vecEndPos.x);
+				WRITE_COORD(tr.vecEndPos.y);
+				WRITE_COORD(tr.vecEndPos.z);
+				MESSAGE_END();
+
+				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY); //  MSG_PAS MSG_BROADCAST
+				WRITE_BYTE(TE_GUNSHOT);
+				WRITE_COORD(tr.vecEndPos.x);
+				WRITE_COORD(tr.vecEndPos.y);
+				WRITE_COORD(tr.vecEndPos.z);
+				MESSAGE_END();
+
+				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY); //  MSG_PAS MSG_BROADCAST
+				WRITE_BYTE(TE_SPARKS);
+				WRITE_COORD(tr.vecEndPos.x);
+				WRITE_COORD(tr.vecEndPos.y);
+				WRITE_COORD(tr.vecEndPos.z);
+				MESSAGE_END();
 
 				TEXTURETYPE_PlaySound(&tr, vecSrc, vecEnd, iBulletType);
 				DecalGunshot(&tr, iBulletType);

@@ -1776,10 +1776,12 @@ float TEXTURETYPE_PlaySound(TraceResult* ptr, Vector vecSrc, Vector vecEnd, int 
 			return 0.0; // crowbar already makes this sound
 		fvol = 1.0;
 		fvolbar = 0.2;
-		rgsz[0] = "weapons/bullet_hit1.wav";
-		rgsz[1] = "weapons/bullet_hit2.wav";
+		rgsz[0] = "other/hurt1.wav";
+		rgsz[1] = "other/hurt2.wav";
+		rgsz[2] = "other/hurt3.wav";
+		rgsz[3] = "other/hurt4.wav";
 		fattn = 1.0;
-		cnt = 2;
+		cnt = 4;
 		break;
 	}
 
