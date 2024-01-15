@@ -137,7 +137,10 @@ void EV_EjectBrass(float* origin, float* velocity, float rotation, int model, in
 	Vector endpos;
 	VectorClear(endpos);
 	endpos[1] = rotation;
-	gEngfuncs.pEfxAPI->R_TempModel(origin, velocity, endpos, 2.5, model, soundtype);
+	TEMPENTITY* z = gEngfuncs.pEfxAPI->R_TempModel(origin, velocity, endpos, 2.5, model, soundtype);
+	z->fadeSpeed = 5;
+	z->entity.baseline.angles = Vector(360.0 * gEngfuncs.pfnRandomFloat(0.0, 3.0), 360.0 * gEngfuncs.pfnRandomFloat(0.0, 1.0), 0); // Somehow this sets rotational velocity ???? Id like to thank valve for this wonderful breakthgrough in techonologires
+	z->entity.baseline.gravity = 0.5;// might not do anything but cant be fucked
 }
 
 /*
@@ -170,12 +173,12 @@ void EV_GetDefaultShellInfo(event_args_t* args, float* origin, float* velocity, 
 		}
 	}
 
-	fR = gEngfuncs.pfnRandomFloat(50, 70);
-	fU = gEngfuncs.pfnRandomFloat(100, 150);
+	fR = gEngfuncs.pfnRandomFloat(80, 150);
+	fU = gEngfuncs.pfnRandomFloat(150, 250);
 
 	for (i = 0; i < 3; i++)
 	{
-		ShellVelocity[i] = velocity[i] + right[i] * fR + up[i] * fU + forward[i] * 25;
+		ShellVelocity[i] = velocity[i] + right[i] * fR + up[i] * fU + forward[i] * 80;
 		ShellOrigin[i] = origin[i] + view_ofs[i] + up[i] * upScale + forward[i] * forwardScale + right[i] * rightScale;
 	}
 }
@@ -198,4 +201,6 @@ void EV_MuzzleFlash()
 
 	// Or in the muzzle flash
 	ent->curstate.effects |= EF_MUZZLEFLASH;
+
+	gEngfuncs.pEfxAPI->R_Explosion(ent->origin, gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/glow05.spr"), 1, 60, TE_EXPLFLAG_NOSOUND | TE_EXPLFLAG_NOPARTICLES);
 }

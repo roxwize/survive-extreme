@@ -449,7 +449,7 @@ void EV_FireGlock1(event_args_t* args)
 	empty = 0 != args->bparam1;
 	AngleVectors(angles, forward, right, up);
 
-	shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shell.mdl"); // brass shell
+	shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shell_pistol.mdl"); // brass shell
 
 	if (EV_IsLocal(idx))
 	{
@@ -457,7 +457,7 @@ void EV_FireGlock1(event_args_t* args)
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(empty ? GLOCK_SHOOT_EMPTY : GLOCK_SHOOT, 0);
 	}
 
-	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 4);
+	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 8);
 
 	EV_EjectBrass(ShellOrigin, ShellVelocity, angles[YAW], shell, TE_BOUNCE_SHELL);
 
@@ -472,6 +472,7 @@ void EV_FireGlock1(event_args_t* args)
 
 void EV_FireGlock2(event_args_t* args)
 {
+	/*
 	int idx;
 	Vector origin;
 	Vector angles;
@@ -512,6 +513,7 @@ void EV_FireGlock2(event_args_t* args)
 	VectorCopy(forward, vecAiming);
 
 	//EV_HLDM_FireBullets(idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_9MM, 0, &tracerCount[idx - 1], args->fparam1, args->fparam2);
+	*/
 }
 //======================
 //	   GLOCK END
@@ -649,7 +651,7 @@ void EV_FireMP5(event_args_t* args)
 
 	AngleVectors(angles, forward, right, up);
 
-	shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shell.mdl"); // brass shell
+	shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shell_rifle.mdl"); // brass shell
 
 	if (EV_IsLocal(idx))
 	{
@@ -658,7 +660,7 @@ void EV_FireMP5(event_args_t* args)
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(MP5_FIRE1 + gEngfuncs.pfnRandomLong(0, 2), 0);
 	}
 
-	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 4);
+	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 6);
 
 	EV_EjectBrass(ShellOrigin, ShellVelocity, angles[YAW], shell, TE_BOUNCE_SHELL);
 

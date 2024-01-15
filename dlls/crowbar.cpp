@@ -225,21 +225,45 @@ bool CCrowbar::Swing(bool fFirst)
 
 		ClearMultiDamage();
 
-		if ((m_flNextPrimaryAttack + 0.2 < UTIL_WeaponTimeBase()) || g_pGameRules->IsMultiplayer())
+		if ((m_flNextPrimaryAttack + 0.5 < UTIL_WeaponTimeBase()) || g_pGameRules->IsMultiplayer())
 		{
 			// first swing does BLISTERING EXPLODALICIOUS damage
-			pEntity->TraceAttack(m_pPlayer->pev, 9999, gpGlobals->v_forward, &tr, DMG_CLUB);
+			pEntity->TraceAttack(m_pPlayer->pev, 9999, gpGlobals->v_forward, &tr, DMG_BULLET);
+			m_flNextPrimaryAttack = GetNextAttackDelay(0.5);
+
+			if (pEntity->pev->takedamage && pEntity->BloodColor() != DONT_BLEED)
+			{
+				for (int asd = 0; asd < 15; asd++) // We get a little SOS
+				{
+					UTIL_BloodStream(tr.vecEndPos, Vector(RANDOM_LONG(-2550, 2550), RANDOM_LONG(-2550, 2550), RANDOM_LONG(-2550, 2550)), 70, RANDOM_LONG(10, 255));
+				}
+			}
 		}
 		else
 		{
 			// subsequent swings do NONE !!! FUCK YOU !!!!
-			pEntity->TraceAttack(m_pPlayer->pev, 1, gpGlobals->v_forward, &tr, DMG_CLUB);
+			pEntity->TraceAttack(m_pPlayer->pev, 0.01, gpGlobals->v_forward, &tr, DMG_BULLET);
+
+			for (int asd = 0; asd < 5; asd++) // Spark bomb
+			{
+				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY); //  MSG_PAS MSG_BROADCAST
+				WRITE_BYTE(TE_TRACER);
+				WRITE_COORD(tr.vecEndPos.x + RANDOM_LONG(-16, 16));
+				WRITE_COORD(tr.vecEndPos.y + RANDOM_LONG(-16, 16));
+				WRITE_COORD(tr.vecEndPos.z + RANDOM_LONG(-16, 16));
+				WRITE_COORD(tr.vecEndPos.x);
+				WRITE_COORD(tr.vecEndPos.y);
+				WRITE_COORD(tr.vecEndPos.z);
+				MESSAGE_END();
+			}
+
+			DecalGunshot(&tr, BULLET_NONE);
 		}
 		ApplyMultiDamage(m_pPlayer->pev, m_pPlayer->pev);
 
 #endif
 
-		m_flNextPrimaryAttack = GetNextAttackDelay(0.08);
+		m_flNextPrimaryAttack = GetNextAttackDelay(0.01);
 
 #ifndef CLIENT_DLL
 		// play thwack, smack, or dong sound

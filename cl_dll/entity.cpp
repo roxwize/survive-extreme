@@ -332,7 +332,7 @@ void DLLEXPORT HUD_StudioEvent(const struct mstudioevent_s* event, const struct 
 	{
 	case 5001:
 		if (iMuzzleFlash)
-			gEngfuncs.pEfxAPI->R_MuzzleFlash((float*)&entity->attachment[0], atoi(event->options));
+			gEngfuncs.pEfxAPI->R_MuzzleFlash((float*)&entity->attachment[0], 33);
 		break;
 	case 5011:
 		if (iMuzzleFlash)

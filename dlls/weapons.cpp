@@ -360,6 +360,13 @@ void W_Precache()
 	PRECACHE_SOUND("other/hurt3.wav"); // hit by bullet
 	PRECACHE_SOUND("other/hurt4.wav"); // hit by bullet
 
+	// WOOps
+
+	PRECACHE_MODEL("models/shell_rifle.mdl");
+	PRECACHE_MODEL("models/shell_pistol.mdl");
+
+	PRECACHE_MODEL("sprites/glow05.spr");
+
 	PRECACHE_SOUND("items/weapondrop1.wav"); // weapon falls to the ground
 }
 
