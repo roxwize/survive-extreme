@@ -26,7 +26,7 @@
 #include "scripted.h"
 #include "animation.h"
 #include "soundent.h"
-
+#include "items.h"
 
 #define NUM_SCIENTIST_HEADS 4 // four heads available for scientist model
 enum
@@ -825,6 +825,10 @@ void CScientist::DeathSound()
 void CScientist::Killed(entvars_t* pevAttacker, int iGib)
 {
 	SetUse(NULL);
+
+    CBaseEntity* crate = CItem::Create("item_statcrate", pev->origin, pev->angles, NULL);
+    crate->Spawn();
+
 	CTalkMonster::Killed(pevAttacker, iGib);
 }
 

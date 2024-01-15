@@ -337,3 +337,37 @@ class CItemLongJump : public CItem
 };
 
 LINK_ENTITY_TO_CLASS(item_longjump, CItemLongJump);
+
+class CItemStatCrate : public CItem {
+    void Spawn() override {
+        Precache();
+        SET_MODEL(ENT(pev), "models/w_statcrate.mdl");
+
+        CItem::Spawn();
+    }
+    void Precache() override {
+        PRECACHE_MODEL("models/w_statcrate.mdl");
+        PRECACHE_SOUND("items/cratepickup.wav");
+    }
+    bool MyTouch(CBasePlayer *pPlayer) override {
+        if (pPlayer->pev->deadflag != DEAD_NO) {
+            return false;
+        }
+        if (pPlayer->pev->health < 300) {
+            pPlayer->pev->health += 15;
+
+            EMIT_SOUND(pPlayer->edict(), CHAN_ITEM, "items/cratepickup.wav", 1, ATTN_NORM);
+
+            MESSAGE_BEGIN(MSG_ONE, gmsgItemPickup, NULL, pPlayer->pev);
+            WRITE_STRING(STRING(pev->classname));
+            MESSAGE_END();
+
+            UTIL_Remove(this);
+
+            return true;
+        }
+        return false;
+    }
+};
+
+LINK_ENTITY_TO_CLASS(item_statcrate, CItemStatCrate);
