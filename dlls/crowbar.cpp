@@ -222,12 +222,14 @@ bool CCrowbar::Swing(bool fFirst)
 		if (m_flPumpTime > 1 || g_pGameRules->IsMultiplayer())
 		{
 			// first swing does BLISTERING EXPLODALICIOUS damage
-			pEntity->TraceAttack(m_pPlayer->pev, 10, gpGlobals->v_forward, &tr, DMG_BULLET|DMG_ALWAYSGIB);
+			pEntity->TraceAttack(m_pPlayer->pev, 2, gpGlobals->v_forward, &tr, DMG_BULLET|DMG_ALWAYSGIB);
+			VectorAdd(m_pPlayer->pev->velocity, gpGlobals->v_forward*-50, m_pPlayer->pev->velocity)
+				VectorAdd(pEntity->pev->velocity, gpGlobals->v_forward * 100, pEntity->pev->velocity)
 			m_flNextPrimaryAttack = GetNextAttackDelay(0.5);
 
 			if (pEntity->pev->takedamage && pEntity->BloodColor() != DONT_BLEED)
 			{
-				for (int asd = 0; asd < 15; asd++) // We get a little SOS
+				for (int asd = 0; asd < 5; asd++) // We get a little SOS
 				{
 					UTIL_BloodStream(tr.vecEndPos, Vector(RANDOM_LONG(-2550, 2550), RANDOM_LONG(-2550, 2550), RANDOM_LONG(-2550, 2550)), 70, RANDOM_LONG(10, 255));
 				}
@@ -236,7 +238,7 @@ bool CCrowbar::Swing(bool fFirst)
 		else
 		{
 			// subsequent swings do NONE !!! FUCK YOU !!!!
-			pEntity->TraceAttack(m_pPlayer->pev, 0.01, gpGlobals->v_forward, &tr, DMG_BULLET);
+			pEntity->TraceAttack(m_pPlayer->pev, 0, gpGlobals->v_forward, &tr, DMG_BULLET);
 
 			for (int asd = 0; asd < m_flPumpTime*5; asd++) // Spark bomb
 			{
@@ -281,7 +283,7 @@ bool CCrowbar::Swing(bool fFirst)
 		}
 
 		if (m_flPumpTime > 1) {
-			m_pPlayer->pev->punchangle = Vector(RANDOM_LONG(-8, 8), RANDOM_LONG(-8, 8), RANDOM_LONG(-8, 8));
+			m_pPlayer->pev->punchangle = Vector(RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1));
 		} else {
 			m_pPlayer->pev->punchangle = Vector(RANDOM_FLOAT(-1, 1) * m_flPumpTime, RANDOM_FLOAT(-1, 1) * m_flPumpTime, RANDOM_FLOAT(-1, 1) * m_flPumpTime);
 		}
