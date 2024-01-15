@@ -68,6 +68,9 @@ void CPython::Precache()
 	PRECACHE_SOUND("weapons/357_cock1.wav");
 	PRECACHE_SOUND("weapons/357_shot1.wav");
 	PRECACHE_SOUND("weapons/357_shot2.wav");
+    PRECACHE_SOUND("weapons/357_shot3.wav");
+    PRECACHE_SOUND("weapons/357_shot4.wav");
+    PRECACHE_SOUND("weapons/357_shot5.wav");
 
 	m_usFirePython = PRECACHE_EVENT(1, "events/python.sc");
 }
@@ -87,7 +90,7 @@ bool CPython::Deploy()
 	{
 		pev->body = 0;
 	}
-    m_bBurstFiring = false; // Hey smart guy
+    m_iBurstShots = 0; // Hey smart guy
 
 	return DefaultDeploy("models/v_357.mdl", "models/p_357.mdl", PYTHON_DRAW, "python", pev->body);
 }
@@ -135,6 +138,7 @@ void CPython::Fire() {
     m_pPlayer->m_iWeaponFlash = BRIGHT_GUN_FLASH;
 
     m_iClip--;
+    m_iBurstShots--;
 
     m_pPlayer->pev->effects = (int)(m_pPlayer->pev->effects) | EF_MUZZLEFLASH;
 
@@ -163,12 +167,12 @@ void CPython::Fire() {
         // HEV suit - indicate out of ammo condition
         m_pPlayer->SetSuitUpdate("!HEV_AMO0", false, 0);
 
-    m_flNextPrimaryAttack = 0.2;
+    m_flNextPrimaryAttack = 0.09;
     m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.8;
 
     if (m_iClip <= 0) {
-        // We're done here
-        m_bBurstFiring = false;
+        // Out of ammo before we reached burst count, stop
+        m_iBurstShots = 0;
     }
 }
 
@@ -193,7 +197,7 @@ void CPython::PrimaryAttack()
 		return;
 	}
 
-    m_bBurstFiring = true;
+    m_iBurstShots = 3;
 }
 
 
@@ -214,7 +218,7 @@ void CPython::Reload()
 	bUseScope = g_pGameRules->IsMultiplayer();
 #endif
 
-	DefaultReload(6, PYTHON_RELOAD, 2.0, bUseScope ? 1 : 0);
+	DefaultReload(9, PYTHON_RELOAD, 2.0, bUseScope ? 1 : 0);
 }
 
 
@@ -225,7 +229,7 @@ void CPython::WeaponIdle()
 	m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
 
 	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase()) {
-        if (m_bBurstFiring && UTIL_WeaponTimeBase() >= UTIL_WeaponTimeBase() + m_flNextPrimaryAttack) {
+        if (m_iBurstShots > 0 && UTIL_WeaponTimeBase() >= UTIL_WeaponTimeBase() + m_flNextPrimaryAttack) {
             Fire();
         }
         return;

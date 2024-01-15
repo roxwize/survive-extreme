@@ -744,7 +744,7 @@ void EV_FirePython(event_args_t* args)
 		V_PunchAxis(0, -10.0);
 	}
 
-	switch (gEngfuncs.pfnRandomLong(0, 1))
+	switch (gEngfuncs.pfnRandomLong(0, 4))
 	{
 	case 0:
 		gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/357_shot1.wav", gEngfuncs.pfnRandomFloat(0.8, 0.9), ATTN_NORM, 0, PITCH_NORM);
@@ -752,6 +752,15 @@ void EV_FirePython(event_args_t* args)
 	case 1:
 		gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/357_shot2.wav", gEngfuncs.pfnRandomFloat(0.8, 0.9), ATTN_NORM, 0, PITCH_NORM);
 		break;
+    case 2:
+        gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/357_shot3.wav", gEngfuncs.pfnRandomFloat(0.8, 0.9), ATTN_NORM, 0, PITCH_NORM);
+        break;
+    case 3:
+        gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/357_shot4.wav", gEngfuncs.pfnRandomFloat(0.8, 0.9), ATTN_NORM, 0, PITCH_NORM);
+        break;
+    case 4:
+        gEngfuncs.pEventAPI->EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/357_shot5.wav", gEngfuncs.pfnRandomFloat(0.8, 0.9), ATTN_NORM, 0, PITCH_NORM);
+        break;
 	}
 
 	EV_GetGunPosition(args, vecSrc, origin);
